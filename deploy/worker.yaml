@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: code-runner-worker
+  namespace: code-runner-system
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: code-runner-worker
+  template:
+    metadata:
+      labels:
+        app: code-runner-worker
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k3shandson
+      serviceAccountName: code-runner-api
+      containers:
+        - name: worker
+          image: code-runner-api:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - /code-runner-worker
+          env:
+            - name: RUNNER_NAMESPACE
+              value: code-runner-system
+            - name: RUNNER_TIMEOUT_SECONDS
+              value: "10"
+            - name: RUNNER_TTL_SECONDS
+              value: "300"
+            - name: RUNNER_NODE_SELECTOR
+              value: runner=true
+            - name: REDIS_ADDR
+              value: code-runner-redis:6379
+            - name: REDIS_QUEUE_NAME
+              value: runs:queue
+            - name: REDIS_RECENT_RUNS_KEY
+              value: runs:recent
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi

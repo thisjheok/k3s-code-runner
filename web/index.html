@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mini Code Runner</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <main class="app">
+      <header class="app-header">
+        <h1>Mini Code Runner</h1>
+        <span id="healthStatus" class="health">Checking</span>
+      </header>
+
+      <section class="workspace" aria-label="Code runner workspace">
+        <form id="runForm" class="runner-form">
+          <div class="controls">
+            <label>
+              Language
+              <select id="language" name="language">
+                <option value="python">python</option>
+                <option value="node">node</option>
+              </select>
+            </label>
+
+            <label>
+              Timeout seconds
+              <input id="timeout" name="timeout" type="number" min="1" max="600" value="60">
+            </label>
+
+            <label>
+              Batch count
+              <input id="batchCount" name="batchCount" type="number" min="1" max="100" value="1">
+            </label>
+
+            <label>
+              Sleep seconds
+              <input id="sleepSeconds" name="sleepSeconds" type="number" min="0" max="600" value="0">
+            </label>
+
+            <button id="runButton" type="submit">Run</button>
+          </div>
+
+          <label class="code-label">
+            Code
+            <textarea id="code" name="code" spellcheck="false">print("Hello from k3s")</textarea>
+          </label>
+
+          <p id="message" class="message" role="status"></p>
+        </form>
+
+        <aside class="side-panel">
+          <section class="status-section" aria-labelledby="statusTitle">
+            <div class="section-heading">
+              <h2 id="statusTitle">Status</h2>
+            </div>
+            <dl class="status-grid">
+              <dt>queue_depth</dt>
+              <dd id="statusQueueDepth">-</dd>
+              <dt>worker_replicas</dt>
+              <dd id="statusWorkerReplicas">-</dd>
+              <dt>run_id</dt>
+              <dd id="statusRunId">-</dd>
+              <dt>status</dt>
+              <dd id="statusValue">-</dd>
+              <dt>job_name</dt>
+              <dd id="statusJobName">-</dd>
+              <dt>pod_name</dt>
+              <dd id="statusPodName" class="schedule-value">-</dd>
+              <dt>node_name</dt>
+              <dd id="statusNodeName" class="schedule-value">-</dd>
+              <dt>reason</dt>
+              <dd id="statusReason" class="schedule-value">-</dd>
+            </dl>
+          </section>
+
+          <section class="status-section" aria-labelledby="clusterTitle">
+            <div class="section-heading">
+              <h2 id="clusterTitle">Cluster</h2>
+            </div>
+            <div id="nodeDistribution" class="distribution-list"></div>
+            <div id="workerPods" class="worker-pods"></div>
+          </section>
+
+          <section class="runs-section" aria-labelledby="runsTitle">
+            <div class="section-heading">
+              <h2 id="runsTitle">Recent runs</h2>
+              <button id="refreshButton" class="text-button" type="button">Refresh</button>
+            </div>
+            <div id="runsList" class="runs-list"></div>
+          </section>
+        </aside>
+      </section>
+
+      <section class="monitor-section" aria-labelledby="monitorTitle">
+        <div class="section-heading">
+          <h2 id="monitorTitle">Live Monitor</h2>
+          <span id="monitorUpdated" class="monitor-updated">-</span>
+        </div>
+
+        <div class="metrics-strip">
+          <div>
+            <span>Queue</span>
+            <strong id="metricQueueDepth">0</strong>
+          </div>
+          <div>
+            <span>Workers</span>
+            <strong id="metricWorkerReplicas">0/0</strong>
+          </div>
+          <div>
+            <span>Jobs</span>
+            <strong id="metricJobCount">0</strong>
+          </div>
+          <div>
+            <span>Runner Pods</span>
+            <strong id="metricRunnerPodCount">0</strong>
+          </div>
+        </div>
+
+        <div class="timeline" aria-label="Queue and worker replica history">
+          <div class="timeline-head">
+            <span>queue_depth</span>
+            <span>worker_replicas</span>
+          </div>
+          <div id="historyChart" class="history-chart"></div>
+        </div>
+
+        <div class="monitor-grid">
+          <section class="monitor-panel" aria-labelledby="queueTitle">
+            <h3 id="queueTitle">Queue</h3>
+            <div id="queuedRuns" class="compact-list"></div>
+          </section>
+
+          <section class="monitor-panel" aria-labelledby="workersTitle">
+            <h3 id="workersTitle">Workers</h3>
+            <div id="workerPodList" class="compact-list"></div>
+          </section>
+
+          <section class="monitor-panel" aria-labelledby="nodeLoadTitle">
+            <h3 id="nodeLoadTitle">Node Load</h3>
+            <div id="nodeLoadList" class="node-load-list"></div>
+          </section>
+
+          <section class="monitor-panel wide-panel" aria-labelledby="runnerTitle">
+            <h3 id="runnerTitle">Runner Pods</h3>
+            <div class="table-wrap">
+              <table class="monitor-table">
+                <thead>
+                  <tr>
+                    <th>run_id</th>
+                    <th>status</th>
+                    <th>pod</th>
+                    <th>node</th>
+                    <th>job</th>
+                  </tr>
+                </thead>
+                <tbody id="runnerPodRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="logs-section" aria-labelledby="logsTitle">
+        <div class="section-heading">
+          <h2 id="logsTitle">Logs</h2>
+        </div>
+        <pre id="logs" class="logs">Run code or select a recent run to view logs.</pre>
+      </section>
+    </main>
+
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>

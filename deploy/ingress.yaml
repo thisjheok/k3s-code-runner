@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: code-runner-api
+  namespace: code-runner-system
+spec:
+  rules:
+    - host: code-runner.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: code-runner-api
+                port:
+                  number: 80

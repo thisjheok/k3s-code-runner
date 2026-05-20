@@ -1,0 +1,18 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: code-runner-worker-redis-queue
+  namespace: code-runner-system
+spec:
+  scaleTargetRef:
+    name: code-runner-worker
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 10
+  triggers:
+    - type: redis
+      metadata:
+        address: code-runner-redis.code-runner-system.svc.cluster.local:6379
+        listName: runs:queue
+        listLength: "1"
