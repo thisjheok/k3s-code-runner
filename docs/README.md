@@ -138,6 +138,10 @@ kubectl -n code-runner-system exec deploy/code-runner-redis -- redis-cli ping
 
 ## Current Architecture
 
+<p align="center">
+  <img src="images/keda-worker-scaling-flow.png" alt="Mini Code Runner KEDA-based Worker Scaling Flow" width="900">
+</p>
+
 ```text
 Browser UI
   -> code-runner-api Deployment
