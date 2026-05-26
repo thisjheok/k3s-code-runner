@@ -31,6 +31,18 @@ spec:
               value: "300"
             - name: RUNNER_NODE_SELECTOR
               value: runner=true
+            - name: KUEUE_ENABLED
+              value: "false"
+            - name: KUEUE_QUEUE_NAME
+              value: code-runner-queue
+            - name: RUNNER_CPU_REQUEST
+              value: 100m
+            - name: RUNNER_MEMORY_REQUEST
+              value: 64Mi
+            - name: RUNNER_CPU_LIMIT
+              value: 500m
+            - name: RUNNER_MEMORY_LIMIT
+              value: 256Mi
             - name: REDIS_ADDR
               value: code-runner-redis:6379
             - name: REDIS_QUEUE_NAME

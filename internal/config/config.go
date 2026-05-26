@@ -13,6 +13,12 @@ type Config struct {
 	DefaultTimeoutSecs int64
 	TTLSeconds         int32
 	NodeSelector       map[string]string
+	KueueEnabled       bool
+	KueueQueueName     string
+	RunnerCPURequest    string
+	RunnerMemoryRequest string
+	RunnerCPULimit      string
+	RunnerMemoryLimit   string
 	RedisAddr          string
 	RedisQueueName     string
 	RedisRecentRunsKey string
@@ -26,6 +32,12 @@ func Load() Config {
 		DefaultTimeoutSecs: getEnvInt64("RUNNER_TIMEOUT_SECONDS", 10),
 		TTLSeconds:         int32(getEnvInt64("RUNNER_TTL_SECONDS", 300)),
 		NodeSelector:       parseNodeSelector(getEnv("RUNNER_NODE_SELECTOR", "")),
+		KueueEnabled:       getEnvBool("KUEUE_ENABLED", false),
+		KueueQueueName:     getEnv("KUEUE_QUEUE_NAME", "code-runner-queue"),
+		RunnerCPURequest:    getEnv("RUNNER_CPU_REQUEST", "100m"),
+		RunnerMemoryRequest: getEnv("RUNNER_MEMORY_REQUEST", "64Mi"),
+		RunnerCPULimit:      getEnv("RUNNER_CPU_LIMIT", "500m"),
+		RunnerMemoryLimit:   getEnv("RUNNER_MEMORY_LIMIT", "256Mi"),
 		RedisAddr:          getEnv("REDIS_ADDR", "code-runner-redis:6379"),
 		RedisQueueName:     getEnv("REDIS_QUEUE_NAME", "runs:queue"),
 		RedisRecentRunsKey: getEnv("REDIS_RECENT_RUNS_KEY", "runs:recent"),
@@ -46,6 +58,18 @@ func getEnvInt64(key string, fallback int64) int64 {
 		return fallback
 	}
 	parsed, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		return fallback
+	}
+	return parsed
+}
+
+func getEnvBool(key string, fallback bool) bool {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.ParseBool(value)
 	if err != nil {
 		return fallback
 	}

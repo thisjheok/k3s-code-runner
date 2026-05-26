@@ -23,9 +23,10 @@ import (
 )
 
 const (
-	labelManagedBy = "app.kubernetes.io/managed-by"
-	labelRunID     = "runner.example.com/run-id"
-	statusFailed   = "Failed"
+	labelManagedBy      = "app.kubernetes.io/managed-by"
+	labelRunID          = "runner.example.com/run-id"
+	labelKueueQueueName = "kueue.x-k8s.io/queue-name"
+	statusFailed        = "Failed"
 )
 
 var ErrNotFound = errors.New("run not found")
@@ -358,16 +359,23 @@ func (s *Service) SubmitRun(ctx context.Context, record RunRecord) error {
 func (s *Service) buildJob(name, runID string, spec languageSpec, timeout int64) *batchv1.Job {
 	backoffLimit := int32(0)
 	defaultMode := int32(0444)
+	suspend := false
+	jobLabels := runLabels(runID)
+	if s.cfg.KueueEnabled && strings.TrimSpace(s.cfg.KueueQueueName) != "" {
+		suspend = true
+		jobLabels[labelKueueQueueName] = s.cfg.KueueQueueName
+	}
 
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: s.cfg.Namespace,
-			Labels:    runLabels(runID),
+			Labels:    jobLabels,
 		},
 		Spec: batchv1.JobSpec{
 			BackoffLimit:            &backoffLimit,
 			ActiveDeadlineSeconds:   &timeout,
+			Suspend:                 &suspend,
 			TTLSecondsAfterFinished: &s.cfg.TTLSeconds,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{Labels: runLabels(runID)},
@@ -386,12 +394,12 @@ func (s *Service) buildJob(name, runID string, spec languageSpec, timeout int64)
 							},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("100m"),
-									corev1.ResourceMemory: resource.MustParse("64Mi"),
+									corev1.ResourceCPU:    resourceQuantity(s.cfg.RunnerCPURequest, "100m"),
+									corev1.ResourceMemory: resourceQuantity(s.cfg.RunnerMemoryRequest, "64Mi"),
 								},
 								Limits: corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("500m"),
-									corev1.ResourceMemory: resource.MustParse("256Mi"),
+									corev1.ResourceCPU:    resourceQuantity(s.cfg.RunnerCPULimit, "500m"),
+									corev1.ResourceMemory: resourceQuantity(s.cfg.RunnerMemoryLimit, "256Mi"),
 								},
 							},
 							SecurityContext: &corev1.SecurityContext{
@@ -419,6 +427,14 @@ func (s *Service) buildJob(name, runID string, spec languageSpec, timeout int64)
 			},
 		},
 	}
+}
+
+func resourceQuantity(value, fallback string) resource.Quantity {
+	quantity, err := resource.ParseQuantity(strings.TrimSpace(value))
+	if err == nil {
+		return quantity
+	}
+	return resource.MustParse(fallback)
 }
 
 func (s *Service) detailFromJob(ctx context.Context, runID string, job *batchv1.Job) (RunDetail, error) {
